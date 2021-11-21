@@ -34,9 +34,9 @@ ALL_PACKAGES=$(shell go list ./...)
 
 GOPATH=""
 ifeq ($(OS),Windows_NT)
-	GOPATH = $(shell echo $env:GOPATH)
+	GOPATH = $(shell echo ${env:GOPATH})
 	ifeq ($(GOPATH), )
-		GOPATH = $(shell echo $env:USERPROFILE)/gos
+		GOPATH = $(shell echo ${env:USERPROFILE})/gos
 	endif
 else
 	GOPATH = $(shell printenv GOPATH)
