@@ -36,7 +36,7 @@ GOPATH=""
 ifeq ($(OS),Windows_NT)
 	GOPATH = $(shell echo '${env:GOPATH}')
 	ifeq ($(GOPATH), )
-		GOPATH = $(shell echo '${env:USERPROFILE}')/go
+		GOPATH = $(shell echo '${env:USERPROFILE}')'\\go'
 	endif
 else
 	GOPATH = $(shell printenv GOPATH)
