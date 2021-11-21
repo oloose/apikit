@@ -64,7 +64,7 @@ endif
 testgenerator: framework
 ifeq ($(OS), Windows_NT)
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  '.\\cmd\\apikit\\main.go'
-	move '.\\apikit.exe $(GOPATH)\\bin\\test_apikit.exe'
+	move '.\\apikit.exe' '$(GOPATH)\\bin\\test_apikit.exe'
 	git checkout @ -- '.\\framework\\framework_code.go'
 	git checkout @ -- '.\\framework\\framework_code_client.go'
 	git checkout @ -- '.\\framework\\framework_code_server.go'
