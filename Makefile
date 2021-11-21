@@ -48,11 +48,11 @@ endif
 .PHONY: framework
 framework: ## build framework components
 ifeq ($(OS), Windows_NT)
-	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker.exe .\\cmd\\fpacker\\main.go
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker.exe '.\\cmd\\fpacker\\main.go'
 	move .\\fpacker.exe $(GOPATH)\\bin\\fpacker.exe
-	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code.go
-	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code_client.go -exclude=xserver,validation,middleware,unmarshal -kind=client
-	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code_server.go -exclude=xclient,roundtripper,hooks -kind=server
+	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code.go'
+	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code_client.go' -exclude=xserver,validation,middleware,unmarshal -kind=client
+	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code_server.go' -exclude=xclient,roundtripper,hooks -kind=server
 else
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker ./cmd/fpacker
 	mv ./fpacker $(GOPATH)/bin/fpacker
@@ -79,8 +79,8 @@ endif
 .PHONY: test
 test: testgenerator ## run tests
 ifeq ($(OS), Windows_NT)
-	$(GOPATH)\\bin\\test_apikit --debug  generate  .\\tests\\data\\swagger.yaml  .\\tests\\api\\ api --mocked
-	$(GOPATH)\\bin\\test_apikit --debug  generate .\\example\\api.yaml  .\\example todo --mocked
+	'$(GOPATH)\\bin\\test_apikit' --debug  generate  '.\\tests\\data\\swagger.yaml'  '.\\tests\\api\\' api --mocked
+	'$(GOPATH)\\bin\\test_apikit' --debug  generate '.\\example\\api.yaml'  '.\\example todo' --mocked
 else
 	$(GOPATH)/bin/test_apikit --debug  generate  ./tests/data/swagger.yaml  ./tests/api/ api --mocked
 	$(GOPATH)/bin/test_apikit --debug  generate ./example/api.yaml  ./example todo --mocked
@@ -94,8 +94,8 @@ lint:
 .PHONY: install
 install: framework   ## builds and installs the binaries of the APIKit in $GOPATH/bin
 ifeq ($(OS), Windows_NT)
-	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  .\\cmd\\apikit\\main.go
-	move apikit.exe $(GOPATH)\\bin\\apikit.exe
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  '.\\cmd\\apikit\\main.go'
+	move apikit.exe '$(GOPATH)\\bin\\apikit.exe'
 else
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit  ./cmd/apikit/main.go
 	mv apikit $(GOPATH)/bin/apikit
