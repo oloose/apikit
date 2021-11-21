@@ -49,7 +49,7 @@ endif
 framework: ## build framework components
 ifeq ($(OS), Windows_NT)
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker.exe '.\\cmd\\fpacker\\main.go'
-	move .\\fpacker.exe $(GOPATH)\\bin\\fpacker.exe
+	move '.\\fpacker.exe $(GOPATH)\\bin\\fpacker.exe'
 	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code.go'
 	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code_client.go' -exclude=xserver,validation,middleware,unmarshal -kind=client
 	'$(GOPATH)\\bin\\fpacker' -src '.\\internal\\framework\\' -dest '.\\framework\\framework_code_server.go' -exclude=xclient,roundtripper,hooks -kind=server
@@ -63,11 +63,11 @@ endif
 
 testgenerator: framework
 ifeq ($(OS), Windows_NT)
-	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  .\\cmd\\apikit\\main.go
-	move .\\apikit.exe $(GOPATH)\\bin\\test_apikit.exe
-	git checkout @ -- .\\framework\\framework_code.go
-	git checkout @ -- .\\framework\\framework_code_client.go
-	git checkout @ -- .\\framework\\framework_code_server.go
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  '.\\cmd\\apikit\\main.go'
+	move '.\\apikit.exe $(GOPATH)\\bin\\test_apikit.exe'
+	git checkout @ -- '.\\framework\\framework_code.go'
+	git checkout @ -- '.\\framework\\framework_code_client.go'
+	git checkout @ -- '.\\framework\\framework_code_server.go'
 else
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit  ./cmd/apikit/main.go
 	mv ./apikit $(GOPATH)/bin/test_apikit
