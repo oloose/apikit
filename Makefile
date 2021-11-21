@@ -4,48 +4,88 @@ all: test install ## build APIKit and run tests
 PACKAGE_ROOT = github.com/ExperienceOne/apikit
 PACKAGE_VERSION = ${PACKAGE_ROOT}/internal/framework/version
 
+BUILD_TIME=""
+ifeq ($(OS), Windows_NT)
+	BUILD_TIME=$(shell echo %date%-%time%)
+else
+	BUILD_TIME=$(shell date)
+endif
+
 GIT_COMMIT=""
 GIT_BRANCH=""
 GIT_TAG=""
-BUILD_TIME=$(shell date)
 
 ifneq ($(wildcard .git),)
     $(info use git meta data)
 	GIT_COMMIT=$(shell git rev-parse HEAD)
-	GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	GIT_TAG=$(shell git describe --abbrev=0 --tags)
-	BUILD_TIME=$(shell date)
+	ifeq ($(OS), Windows_NT)
+		GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+	else
+		GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+	endif
 else
     $(error no git meta data inside of this dir)
 endif
 
 BUILD_INFO_FLAGS = -X '${PACKAGE_VERSION}.GitCommit=${GIT_COMMIT}' -X '${PACKAGE_VERSION}.GitBranch=${GIT_BRANCH}' -X '${PACKAGE_VERSION}.GitTag=${GIT_TAG}' -X '${PACKAGE_VERSION}.BuildTime=${BUILD_TIME}'
 
-ALL_PACKAGES=$(shell go list ./... | grep -v "vendor")
-GOPATH = $(shell printenv GOPATH)
-ifeq ($(GOPATH), )
-	GOPATH = ~/go
+ALL_PACKAGES=$(shell go list ./...)
+
+GOPATH=""
+ifeq ($(OS),Windows_NT)
+	GOPATH = $(shell echo %GOPATH%)
+	ifeq ($(GOPATH), )
+		GOPATH = $(shell echo %userprofile%)/gos
+	endif
+else
+	GOPATH = $(shell printenv GOPATH)
+	ifeq ($(GOPATH), )
+		GOPATH = ~/go
+	endif
 endif
 
 .PHONY: framework
 framework: ## build framework components
-	go install -ldflags "${BUILD_INFO_FLAGS}" -v ./cmd/fpacker
+ifeq ($(OS), Windows_NT)
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker.exe .\\cmd\\fpacker\\main.go
+	move .\\fpacker.exe $(GOPATH)\\bin\\fpacker.exe
+	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code.go
+	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code_client.go -exclude=xserver,validation,middleware,unmarshal -kind=client
+	$(GOPATH)\\bin\\fpacker -src .\\internal\\framework\\ -dest .\\framework\\framework_code_server.go -exclude=xclient,roundtripper,hooks -kind=server
+else
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o fpacker ./cmd/fpacker
+	mv ./fpacker $(GOPATH)/bin/fpacker
 	$(GOPATH)/bin/fpacker -src ./internal/framework/ -dest ./framework/framework_code.go
 	$(GOPATH)/bin/fpacker -src ./internal/framework/ -dest ./framework/framework_code_client.go -exclude=xserver,validation,middleware,unmarshal -kind=client
 	$(GOPATH)/bin/fpacker -src ./internal/framework/ -dest ./framework/framework_code_server.go -exclude=xclient,roundtripper,hooks -kind=server
+endif
 
 testgenerator: framework
+ifeq ($(OS), Windows_NT)
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  .\\cmd\\apikit\\main.go
+	move .\\apikit.exe $(GOPATH)\\bin\\test_apikit.exe
+	git checkout @ -- .\\framework\\framework_code.go
+	git checkout @ -- .\\framework\\framework_code_client.go
+	git checkout @ -- .\\framework\\framework_code_server.go
+else
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit  ./cmd/apikit/main.go
 	mv ./apikit $(GOPATH)/bin/test_apikit
 	git checkout @ -- ./framework/framework_code.go
 	git checkout @ -- ./framework/framework_code_client.go
 	git checkout @ -- ./framework/framework_code_server.go
+endif
 
 .PHONY: test
 test: testgenerator ## run tests
+ifeq ($(OS), Windows_NT)
+	$(GOPATH)\\bin\\test_apikit --debug  generate  .\\tests\\data\\swagger.yaml  .\\tests\\api\\ api --mocked
+	$(GOPATH)\\bin\\test_apikit --debug  generate .\\example\\api.yaml  .\\example todo --mocked
+else
 	$(GOPATH)/bin/test_apikit --debug  generate  ./tests/data/swagger.yaml  ./tests/api/ api --mocked
 	$(GOPATH)/bin/test_apikit --debug  generate ./example/api.yaml  ./example todo --mocked
-	for package in $(ALL_PACKAGES); do ENVIRONMENT=test go test -count=1 -v $$package; if [ $$? -ne "0" ]; then echo "Test failed!"; exit 1; fi; done
+endif
+	go test -v -failfast ./...
 
 .PHONY: lint
 lint:
@@ -53,11 +93,16 @@ lint:
 
 .PHONY: install
 install: framework   ## builds and installs the binaries of the APIKit in $GOPATH/bin
+ifeq ($(OS), Windows_NT)
+	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit.exe  .\\cmd\\apikit\\main.go
+	move apikit.exe $(GOPATH)\\bin\\apikit.exe
+else
 	go build -ldflags "${BUILD_INFO_FLAGS}" -o apikit  ./cmd/apikit/main.go
 	mv apikit $(GOPATH)/bin/apikit
+endif
 
 .PHONY: help
 help:	            ## prints help for most of the make targets
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-30s\\033[0m %s\\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
